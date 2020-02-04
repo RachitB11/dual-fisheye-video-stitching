@@ -8,11 +8,11 @@ def getMatches_templmatch(img1, img2, templ_shape, max):
     """Return pairs of corresponding points
     using brute force template matching."""
     if not np.array_equal(img1.shape, img2.shape):
-        print "error: inconsistent array dimention", img1.shape, img2.shape
+        print("error: inconsistent array dimention", img1.shape, img2.shape)
         sys.exit()
     if not (np.all(templ_shape <= img1.shape[:2]) and
             np.all(templ_shape <= img2.shape[:2])):
-        print "error: template shape shall fit img1 and img2"
+        print("error: template shape shall fit img1 and img2")
         sys.exit()
 
     Hs, Ws = img1.shape[:2]
@@ -36,11 +36,11 @@ def getMatches_goodtemplmatch(img1, img2, templ_shape, max):
     """Return pairs of corresponding points
     using combining Shi-Tomasi corner detector and template matching."""
     if not np.array_equal(img1.shape, img2.shape):
-        print "error: inconsistent array dimention", img1.shape, img2.shape
+        print("error: inconsistent array dimention", img1.shape, img2.shape)
         sys.exit()
     if not (np.all(templ_shape <= img1.shape[:2]) and
             np.all(templ_shape <= img2.shape[:2])):
-        print "error: template shape shall fit img1 and img2"
+        print("error: template shape shall fit img1 and img2")
         sys.exit()
 
     feature_params = dict(maxCorners=max, qualityLevel=0.01,

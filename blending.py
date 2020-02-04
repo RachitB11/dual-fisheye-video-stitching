@@ -41,7 +41,7 @@ def multi_band_blending(img1, img2, mask, leveln=6):
     if leveln is None:
         leveln = max_leveln
     if leveln < 1 or leveln > max_leveln:
-        print "warning: inappropriate number of leveln"
+        print("warning: inappropriate number of leveln")
         leveln = max_leveln
 
     # Get Gaussian pyramid and Laplacian pyramid

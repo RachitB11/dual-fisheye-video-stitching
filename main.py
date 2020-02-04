@@ -50,23 +50,23 @@ def Hcalc(cap, xmap, ymap):
 
             # shift the remapped images along x-axis
             shifted_cams = np.zeros((H * 2, W, 3), np.uint8)
-            shifted_cams[H:, (W - W_remap) / 2:(W + W_remap) / 2] = cam2
-            shifted_cams[:H, :W_remap / 2] = cam1[:, W_remap / 2:]
-            shifted_cams[:H, W - W_remap / 2:] = cam1[:, :W_remap / 2]
+            shifted_cams[H:, (W - W_remap) // 2:(W + W_remap) // 2] = cam2
+            shifted_cams[:H, :W_remap // 2] = cam1[:, W_remap // 2:]
+            shifted_cams[:H, W - W_remap // 2:] = cam1[:, :W_remap // 2]
 
             # find matches and extract pairs of correspondent matching points
             matchesL = feature_matching.getMatches_goodtemplmatch(
-                cam1_gray[offsetYL:H - offsetYL, W / 2:],
-                cam2_gray[offsetYL:H - offsetYL, :W_remap - W / 2],
+                cam1_gray[offsetYL:H - offsetYL, W // 2:],
+                cam2_gray[offsetYL:H - offsetYL, :W_remap - W // 2],
                 templ_shape, maxL)
             matchesR = feature_matching.getMatches_goodtemplmatch(
-                cam2_gray[offsetYR:H - offsetYR, W / 2:],
-                cam1_gray[offsetYR:H - offsetYR, :W_remap - W / 2],
+                cam2_gray[offsetYR:H - offsetYR, W // 2:],
+                cam1_gray[offsetYR:H - offsetYR, :W_remap - W // 2],
                 templ_shape, maxR)
             matchesR = matchesR[:, -1::-1]
 
-            matchesL = matchesL + ((W - W_remap) / 2, offsetYL)
-            matchesR = matchesR + ((W - W_remap) / 2 + W / 2, offsetYR)
+            matchesL = matchesL + ((W - W_remap) // 2, offsetYL)
+            matchesR = matchesR + ((W - W_remap) // 2 + W // 2, offsetYR)
             zipped_matches = zip(matchesL, matchesR)
             matches = np.int32([e for i in zipped_matches for e in i])
             pts1 = matches[:, 0]
@@ -76,7 +76,7 @@ def Hcalc(cap, xmap, ymap):
             M, status = cv2.findHomography(pts2, pts1, cv2.RANSAC, 4.0)
             Mlist.append(M)
     M = np.average(np.array(Mlist), axis=0)
-    print M
+    # print(M)
     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
     return M
 
@@ -85,7 +85,7 @@ def main(input, output):
     cap = cv2.VideoCapture(input)
 
     # define the codec and create VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    fourcc = cv2.VideoWriter_fourcc(*'MPEG')
     out = cv2.VideoWriter(output, fourcc, 30.0, (W, H))
 
     # obtain xmap and ymap
@@ -99,7 +99,7 @@ def main(input, output):
 
     # estimate empty (invalid) area of warped2
     EAof2 = np.zeros((H, W, 3), np.uint8)
-    EAof2[:, (W - W_remap) / 2 + 1:(W + W_remap) / 2 - 1] = 255
+    EAof2[:, (W - W_remap) // 2 + 1:(W + W_remap) // 2 - 1] = 255
     EAof2 = cv2.warpPerspective(EAof2, M, (W, H))
 
     # process the first frame
@@ -111,9 +111,9 @@ def main(input, output):
 
         # shift the remapped images along x-axis
         shifted_cams = np.zeros((H * 2, W, 3), np.uint8)
-        shifted_cams[H:, (W - W_remap) / 2:(W + W_remap) / 2] = cam2
-        shifted_cams[:H, :W_remap / 2] = cam1[:, W_remap / 2:]
-        shifted_cams[:H, W - W_remap / 2:] = cam1[:, :W_remap / 2]
+        shifted_cams[H:, (W - W_remap) // 2:(W + W_remap) // 2] = cam2
+        shifted_cams[:H, :W_remap // 2] = cam1[:, W_remap // 2:]
+        shifted_cams[:H, W - W_remap // 2:] = cam1[:, :W_remap // 2]
 
         # warp cam2 using homography M
         warped2 = cv2.warpPerspective(shifted_cams[H:], M, (W, H))
@@ -125,17 +125,17 @@ def main(input, output):
 
         # image labeling (find minimum error boundary cut)
         mask, minloc_old = optimal_seamline.imgLabeling(
-            warped1[:, W_remap / 2 - W_lbl:W_remap / 2],
-            warped2[:, W_remap / 2 - W_lbl:W_remap / 2],
-            warped1[:, W - W_remap / 2:W - W_remap / 2 + W_lbl],
-            warped2[:, W - W_remap / 2:W - W_remap / 2 + W_lbl],
-            (W, H), W_remap / 2 - W_lbl, W - W_remap / 2)
+            warped1[:, W_remap // 2 - W_lbl:W_remap // 2],
+            warped2[:, W_remap // 2 - W_lbl:W_remap // 2],
+            warped1[:, W - W_remap // 2:W - W_remap // 2 + W_lbl],
+            warped2[:, W - W_remap // 2:W - W_remap // 2 + W_lbl],
+            (W, H), W_remap // 2 - W_lbl, W - W_remap // 2)
 
         labeled = warped1 * mask + warped2 * (1 - mask)
 
         # fill empty area of warped1 and warped2, to avoid darkening
-        warped1[:, W_remap / 2:W - W_remap /
-                2] = warped2[:, W_remap / 2:W - W_remap / 2]
+        warped1[:, W_remap // 2:W - W_remap //
+                2] = warped2[:, W_remap // 2:W - W_remap // 2]
         warped2[EAof2 == 0] = warped1[EAof2 == 0]
 
         # multi band blending
@@ -165,9 +165,9 @@ def main(input, output):
 
             # shift the remapped images along x-axis
             shifted_cams = np.zeros((H * 2, W, 3), np.uint8)
-            shifted_cams[H:, (W - W_remap) / 2:(W + W_remap) / 2] = cam2
-            shifted_cams[:H, :W_remap / 2] = cam1[:, W_remap / 2:]
-            shifted_cams[:H, W - W_remap / 2:] = cam1[:, :W_remap / 2]
+            shifted_cams[H:, (W - W_remap) // 2:(W + W_remap) // 2] = cam2
+            shifted_cams[:H, :W_remap // 2] = cam1[:, W_remap // 2:]
+            shifted_cams[:H, W - W_remap // 2:] = cam1[:, :W_remap // 2]
 
             # warp cam2 using homography M
             warped2 = cv2.warpPerspective(shifted_cams[H:], M, (W, H))
@@ -180,17 +180,17 @@ def main(input, output):
 
             # image labeling (find minimum error boundary cut)
             mask, minloc_old = optimal_seamline.imgLabeling(
-                warped1[:, W_remap / 2 - W_lbl:W_remap / 2],
-                warped2[:, W_remap / 2 - W_lbl:W_remap / 2],
-                warped1[:, W - W_remap / 2:W - W_remap / 2 + W_lbl],
-                warped2[:, W - W_remap / 2:W - W_remap / 2 + W_lbl],
-                (W, H), W_remap / 2 - W_lbl, W - W_remap / 2, minloc_old)
+                warped1[:, W_remap // 2 - W_lbl:W_remap // 2],
+                warped2[:, W_remap // 2 - W_lbl:W_remap // 2],
+                warped1[:, W - W_remap // 2:W - W_remap // 2 + W_lbl],
+                warped2[:, W - W_remap // 2:W - W_remap // 2 + W_lbl],
+                (W, H), W_remap // 2 - W_lbl, W - W_remap // 2, minloc_old)
 
             labeled = warped1 * mask + warped2 * (1 - mask)
 
             # fill empty area of warped1 and warped2, to avoid darkening
-            warped1[:, W_remap / 2:W - W_remap /
-                    2] = warped2[:, W_remap / 2:W - W_remap / 2]
+            warped1[:, W_remap // 2:W - W_remap //
+                    2] = warped2[:, W_remap // 2:W - W_remap // 2]
             warped2[EAof2 == 0] = warped1[EAof2 == 0]
 
             # multi band blending
